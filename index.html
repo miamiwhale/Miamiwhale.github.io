@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -30,7 +30,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1300px;
             width: 100%;
             margin: 0 auto;
             position: relative;
@@ -501,15 +501,10 @@
             opacity: 0.6;
         }
 
-        .token-price .price-decimal {
+        .price-sub {
             font-size: 0.7em;
-            opacity: 0.7;
-        }
-
-        .token-price .price-zero {
-            font-size: 0.65em;
-            opacity: 0.5;
-            vertical-align: baseline;
+            vertical-align: sub;
+            line-height: 1;
         }
 
         .token-stats {
@@ -999,7 +994,7 @@
             const intPart = parts[0];
             const decPart = parts[1];
             
-            // Find where the significant digits start
+            // Find first non-zero digit
             let firstNonZero = -1;
             for (let i = 0; i < decPart.length; i++) {
                 if (decPart[i] !== '0') {
@@ -1009,20 +1004,19 @@
             }
             
             if (firstNonZero === -1) {
-                // All zeros
                 return `$${intPart}.${decPart}`;
             }
             
-            // If price is very small (more than 3 zeros before first non-zero)
-            if (firstNonZero >= 3) {
+            // Only use subscript if there are 5 or more zeros
+            if (firstNonZero >= 5) {
                 const zeroCount = firstNonZero;
-                const significantDigits = decPart.slice(firstNonZero, firstNonZero + 4);
-                return `$${intPart}.<span class="price-zero">${'0'.repeat(zeroCount)}</span><span class="price-decimal">${significantDigits}</span>`;
+                const significantDigits = decPart.slice(firstNonZero);
+                const displayDigits = significantDigits.slice(0, 6);
+                return `$${intPart}.0<sub class="price-sub">${zeroCount}</sub>${displayDigits}`;
             }
             
-            // Normal display with 6-9 decimals
-            const displayDecimals = Math.min(9, decPart.length);
-            const displayPart = decPart.slice(0, displayDecimals);
+            // Show all digits normally (4 zeros or less)
+            const displayPart = decPart.slice(0, 6);
             return `$${intPart}.${displayPart}`;
         }
 
