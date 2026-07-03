@@ -30,7 +30,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1300px;
             width: 100%;
             margin: 0 auto;
             position: relative;
@@ -501,10 +501,21 @@
             opacity: 0.6;
         }
 
+        .token-price .price-decimal {
+            font-size: 0.7em;
+            opacity: 0.7;
+        }
+
+        .token-price .price-zero {
+            font-size: 0.65em;
+            opacity: 0.5;
+            vertical-align: baseline;
+        }
+
         .token-stats {
             display: flex;
             align-items: center;
-            gap: clamp(12px, 2vw, 24px);
+            gap: clamp(16px, 3vw, 36px);
             flex-wrap: wrap;
             flex: 1 1 100%;
             justify-content: space-between;
@@ -516,7 +527,8 @@
             flex-direction: column;
             align-items: flex-start;
             flex: 1;
-            min-width: 60px;
+            min-width: 80px;
+            max-width: 180px;
         }
 
         .stat-label {
@@ -525,6 +537,7 @@
             text-transform: uppercase;
             letter-spacing: 0.06em;
             color: rgba(255, 255, 255, 0.4);
+            white-space: nowrap;
         }
 
         .stat-value {
@@ -535,6 +548,7 @@
             margin-top: 1px;
             letter-spacing: -0.3px;
             word-break: break-word;
+            white-space: nowrap;
         }
 
         .stat-value.change.up {
@@ -816,7 +830,8 @@
             }
             
             .stat-item {
-                min-width: 45px;
+                min-width: 60px;
+                max-width: 120px;
             }
             
             .token-avatar {
@@ -852,6 +867,12 @@
             .token-stats {
                 flex: 0 1 auto;
                 margin-top: 0;
+                gap: clamp(20px, 4vw, 48px);
+            }
+            
+            .stat-item {
+                min-width: 100px;
+                max-width: 200px;
             }
             
             .token-action {
@@ -969,6 +990,46 @@
             { address: 'DdPrHYqM8Ueovnk9kAnAgoGhswkuaTqmxcoZzU3Zpump' },
             { address: '' }
         ];
+
+        function formatPriceDexStyle(price) {
+            if (!price || price === 0) return '$0.000000';
+            
+            const priceStr = price.toFixed(9);
+            const parts = priceStr.split('.');
+            const intPart = parts[0];
+            const decPart = parts[1];
+            
+            // Find where the significant digits start
+            let firstNonZero = -1;
+            for (let i = 0; i < decPart.length; i++) {
+                if (decPart[i] !== '0') {
+                    firstNonZero = i;
+                    break;
+                }
+            }
+            
+            if (firstNonZero === -1) {
+                // All zeros
+                return `$${intPart}.${decPart}`;
+            }
+            
+            // If price is very small (more than 3 zeros before first non-zero)
+            if (firstNonZero >= 3) {
+                const zeroCount = firstNonZero;
+                const significantDigits = decPart.slice(firstNonZero, firstNonZero + 4);
+                return `$${intPart}.<span class="price-zero">${'0'.repeat(zeroCount)}</span><span class="price-decimal">${significantDigits}</span>`;
+            }
+            
+            // Normal display with 6-9 decimals
+            const displayDecimals = Math.min(9, decPart.length);
+            const displayPart = decPart.slice(0, displayDecimals);
+            return `$${intPart}.${displayPart}`;
+        }
+
+        function formatPrice(price) {
+            if (!price || price === 0) return '$0.000000';
+            return formatPriceDexStyle(price);
+        }
 
         function copyToClipboard(text, element) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1141,11 +1202,7 @@
             const changeSymbol = data.change24h >= 0 ? '+' : '';
             const changeValue = `${changeSymbol}${data.change24h.toFixed(1)}%`;
             
-            const priceFormatted = data.price.toFixed(6);
-            const priceParts = priceFormatted.split('.');
-            const priceInt = priceParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            const priceDec = priceParts[1] || '000000';
-            const priceValue = `$${priceInt}.${priceDec}`;
+            const priceHtml = formatPrice(data.price);
             
             const volumeValue = data.volume24h || '--';
             const liquidityValue = data.liquidity || '--';
@@ -1186,7 +1243,7 @@
                             </button>
                         </div>
                         <div class="token-price">
-                            ${priceValue}
+                            ${priceHtml}
                             <span class="price-usd">USD</span>
                         </div>
                     </div>
@@ -1298,6 +1355,6 @@
 
         updateAllTokens();
         setInterval(updateAllTokens, 20000);
-     </script>
+    </script>
 </body>
 </html>
